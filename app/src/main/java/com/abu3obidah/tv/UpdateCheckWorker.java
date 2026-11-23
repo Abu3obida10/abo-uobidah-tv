@@ -6,6 +6,7 @@ import androidx.work.Worker;
 import androidx.work.WorkerParameters;
 
 public final class UpdateCheckWorker extends Worker {
+    // Runs only when Android reports an available network connection.
     private static final String PREFS = "update_notification_state";
     public UpdateCheckWorker(@NonNull Context context, @NonNull WorkerParameters parameters) { super(context, parameters); }
     @NonNull @Override public Result doWork() {

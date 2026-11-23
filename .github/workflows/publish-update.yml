@@ -19,6 +19,8 @@ jobs:
           SIGNING_BUNDLE: ${{ secrets.ANDROID_SIGNING_BUNDLE }}
         shell: bash
         run: |
+          # GitHub's mobile secret editor may insert line breaks when pasting a long JSON value.
+          SIGNING_BUNDLE=$(printf '%s' "$SIGNING_BUNDLE" | tr -d '\r\n\t')
           if [[ -n "$SIGNING_BUNDLE" ]] && jq -e '
             (.keystoreBase64 | type == "string" and length > 0) and
             (.storePassword | type == "string" and length > 0) and

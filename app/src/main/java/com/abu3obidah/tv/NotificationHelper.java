@@ -14,7 +14,7 @@ import androidx.core.content.ContextCompat;
 final class NotificationHelper {
     private static final String CHANNEL_ID = "app_updates";
     private NotificationHelper() { }
-    static void showUpdateAvailable(Context context, UpdateManifest manifest) {
+    static void showUpdateAvailable(Context context, UpdateManifest manifest, boolean downloaded) {
         if (Build.VERSION.SDK_INT >= 33
                 && ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) return;
         NotificationManager manager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
@@ -27,10 +27,13 @@ final class NotificationHelper {
         openApp.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
         PendingIntent pending = PendingIntent.getActivity(context, 1001, openApp,
                 PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
-        String body = "الإصدار " + manifest.versionName + " متاح الآن. افتح التطبيق للتحديث.";
+        String title = downloaded ? "تحديث أبو عبيدة TV جاهز للتثبيت" : "يوجد تحديث جديد لأبو عبيدة TV";
+        String body = downloaded
+                ? "تم تنزيل الإصدار " + manifest.versionName + " والتحقق منه. اضغط لفتح التطبيق وتثبيته."
+                : "الإصدار " + manifest.versionName + " متاح. افتح التطبيق لتنزيله.";
         NotificationCompat.Builder notification = new NotificationCompat.Builder(context, CHANNEL_ID)
                 .setSmallIcon(android.R.drawable.stat_sys_download_done)
-                .setContentTitle("يتوفر تحديث جديد لأبو عبيدة TV").setContentText(body)
+                .setContentTitle(title).setContentText(body)
                 .setStyle(new NotificationCompat.BigTextStyle().bigText(body))
                 .setPriority(NotificationCompat.PRIORITY_DEFAULT).setAutoCancel(true).setContentIntent(pending);
         NotificationManagerCompat.from(context).notify(2001, notification.build());

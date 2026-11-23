@@ -121,12 +121,20 @@ public final class MainActivity extends Activity {
         executor.execute(() -> {
             try {
                 UpdateManifest manifest = UpdateClient.fetchLatest();
+                boolean cached = UpdateClient.isCachedUpdateValid(this, manifest);
+                File cachedFile = cached ? UpdateClient.cachedApk(this) : null;
                 runOnUiThread(() -> {
-                    setBusy(false); availableUpdate = manifest; downloadedApk = null;
+                    setBusy(false); availableUpdate = manifest; downloadedApk = cachedFile;
                     if (manifest.isNewerThanInstalled() && manifest.isDownloadReady()) {
-                        statusView.setText("يتوفر تحديث جديد: " + manifest.versionName
-                                + (manifest.releaseNotes.isEmpty() ? "" : "\n" + manifest.releaseNotes));
-                        updateButton.setText("تنزيل وتثبيت التحديث"); updateButton.setVisibility(View.VISIBLE);
+                        if (cached) {
+                            statusView.setText("تم تنزيل الإصدار " + manifest.versionName + " والتحقق منه. جاهز للتثبيت.");
+                            updateButton.setText("تثبيت التحديث الآن");
+                        } else {
+                            statusView.setText("يتوفر تحديث جديد: " + manifest.versionName
+                                    + (manifest.releaseNotes.isEmpty() ? "" : "\\n" + manifest.releaseNotes));
+                            updateButton.setText("تنزيل وتثبيت التحديث");
+                        }
+                        updateButton.setVisibility(View.VISIBLE);
                     } else if (manifest.isNewerThanInstalled()) {
                         statusView.setText("يوجد إصدار أحدث، لكن ملف التثبيت لم يُنشر بعد.");
                         updateButton.setVisibility(View.GONE);

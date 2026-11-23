@@ -64,7 +64,7 @@ final class UpdateClient {
 
     static File downloadAndVerify(Context context, UpdateManifest manifest, ProgressListener listener) throws Exception {
         if (manifest == null || !manifest.isDownloadReady()) throw new IOException("Update is not ready");
-        File directory = new File(context.getCacheDir(), "updates");
+        File directory = new File(context.getFilesDir(), "updates");
         if (!directory.exists() && !directory.mkdirs()) throw new IOException("Could not create update folder");
         File apkFile = new File(directory, "abo-uobidah-update.apk");
         if (apkFile.exists() && !apkFile.delete()) throw new IOException("Could not replace old APK");
@@ -102,6 +102,32 @@ final class UpdateClient {
             apkFile.delete();
             throw exception;
         } finally { connection.disconnect(); }
+    }
+
+    static File cachedApk(Context context) {
+        return new File(new File(context.getFilesDir(), "updates"), "abo-uobidah-update.apk");
+    }
+
+    static boolean isCachedUpdateValid(Context context, UpdateManifest manifest) {
+        File apkFile = cachedApk(context);
+        if (manifest == null || !apkFile.isFile()) return false;
+        try (InputStream input = new BufferedInputStream(new java.io.FileInputStream(apkFile))) {
+            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            byte[] buffer = new byte[64 * 1024];
+            int count;
+            while ((count = input.read(buffer)) != -1) digest.update(buffer, 0, count);
+            if (!toHex(digest.digest()).equalsIgnoreCase(manifest.sha256)) {
+                //noinspection ResultOfMethodCallIgnored
+                apkFile.delete();
+                return false;
+            }
+            verifyPackageAndSignature(context, apkFile, manifest);
+            return true;
+        } catch (Exception exception) {
+            //noinspection ResultOfMethodCallIgnored
+            apkFile.delete();
+            return false;
+        }
     }
 
     private static void verifyPackageAndSignature(Context context, File apkFile, UpdateManifest manifest) throws Exception {

@@ -1,0 +1,48 @@
+plugins {
+    id 'com.android.application'
+}
+def releaseVersionCode = (System.getenv("VERSION_CODE") ?: "1").toInteger()
+def releaseVersionName = System.getenv("VERSION_NAME") ?: "1.0.0"
+def signingStorePath = System.getenv("ANDROID_KEYSTORE_PATH")
+android {
+    namespace 'com.abu3obidah.tv'
+    compileSdk 36
+    defaultConfig {
+        applicationId 'com.abu3obidah.tv'
+        minSdk 24
+        targetSdk 35
+        versionCode releaseVersionCode
+        versionName releaseVersionName
+    }
+    buildFeatures { buildConfig true }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+    signingConfigs {
+        if (signingStorePath != null && !signingStorePath.isEmpty()) {
+            release {
+                storeFile file(signingStorePath)
+                storePassword System.getenv("ANDROID_KEYSTORE_PASSWORD")
+                keyAlias System.getenv("ANDROID_KEY_ALIAS")
+                keyPassword System.getenv("ANDROID_KEY_PASSWORD")
+            }
+        }
+    }
+    buildTypes {
+        debug {
+            applicationIdSuffix '.debug'
+            versionNameSuffix '-debug'
+        }
+        release {
+            minifyEnabled false
+            if (signingStorePath != null && !signingStorePath.isEmpty()) {
+                signingConfig signingConfigs.release
+            }
+        }
+    }
+}
+dependencies {
+    implementation 'androidx.core:core:1.19.1'
+    implementation 'androidx.work:work-runtime:2.12.0'
+}

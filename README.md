@@ -9,50 +9,41 @@ Android TV / Android application project with a GitHub-based in-app update chann
 - Minimum Android version: Android 7.0 / API 24
 - Update manifest: updates/latest.json
 
-Do not change the application ID after the first public installation. Every update must be signed with the same private signing key.
+Do not change the application ID after the first public installation. Every update must be signed with the same permanent private signing key.
 
 ## Implemented in this foundation
 
 - Android mobile and Android TV launcher entry points.
 - Update check when the app opens, plus a background network-constrained WorkManager check every 15 minutes (Android may defer background work).
-- When a newer release is found and the Internet is available, the worker downloads the APK in the background, checks its SHA-256, package ID, version and signer, then sends a notification that it is ready.
+- When a newer release is found and the Internet is available, the worker downloads the APK in the background, checks its SHA-256, package ID, version, and signer, then sends a notification that it is ready.
 - If background download fails, the app still shows the update and lets the user retry manually.
-- The app also lets the user manually check, download with progress, and install.
-- Android package installer handoff. Android requires the user to confirm installation; ordinary apps cannot silently install themselves.
+- Manual check, foreground download progress, and Android installer handoff.
 - GitHub Actions build validation on source pushes.
-- Automatic signed release publication after the signing secrets below are added. The release workflow updates updates/latest.json after publishing the APK.
+- Automatic signed release publication after the single signing secret below is saved. The release workflow updates updates/latest.json after publishing the APK.
 
-## One-time signing setup (required before automatic public APK updates)
+## One-time signing setup (required before public production releases)
 
-A permanent private Android signing key is required. Never commit it to this repository.
+A permanent private Android signing key has been generated for this app. Its backup is delivered separately as `Abo_Uobidah_TV_Signing_Backup.zip`. Keep it private and make at least one secure backup. Never commit this archive, its JSON bundle, or the keystore to the public repository.
 
-Create a release keystore using Android Studio (Build -> Generate Signed Bundle / APK -> APK -> Create new) or keytool. Keep a secure private backup. Add these four repository Actions secrets:
+To activate automatic production releases, add exactly one repository Actions secret:
 
-| Secret | Value |
-|---|---|
-| ANDROID_KEYSTORE_BASE64 | Base64 text of the .jks / .keystore file |
-| ANDROID_KEYSTORE_PASSWORD | Keystore password |
-| ANDROID_KEY_ALIAS | Key alias |
-| ANDROID_KEY_PASSWORD | Key password |
+- Name: `ANDROID_SIGNING_BUNDLE`
+- Value: the complete text inside `ANDROID_SIGNING_BUNDLE.json` from the private signing backup archive.
 
-On Windows PowerShell, convert the keystore file to Base64 for the first secret:
+Open GitHub -> repository `abo-uobidah-tv` -> Settings -> Secrets and variables -> Actions -> New repository secret. Paste the full JSON file contents as the secret value.
 
-    [Convert]::ToBase64String([IO.File]::ReadAllBytes("C:\secure\abo-uobidah-release.jks")) | Set-Clipboard
+This single secret contains the encoded keystore and its passwords. Do not paste it into an issue, commit, public file, or chat message. Keep the original backup safe. Losing this signing key means Android will refuse future updates signed with a different key; anyone who obtains the key can sign a malicious update.
 
-Add secrets at GitHub -> this repository -> Settings -> Secrets and variables -> Actions -> New repository secret.
-
-Back up the keystore and passwords securely. Losing the key means Android will refuse future updates over the installed app. Anyone obtaining the key can sign a malicious update.
-
-## How it works once signing is configured
+## How it works after the secret is saved
 
 1. Push a source-code fix to main.
-2. GitHub Actions builds and signs a new APK using the saved private key.
+2. GitHub Actions builds and signs a new APK using the saved key.
 3. The workflow publishes a GitHub Release and updates the live manifest with its URL, version code, SHA-256 and signer fingerprint.
 4. The installed app checks GitHub when opened and periodically when network access is available.
 5. The app downloads and verifies the update in the background, then displays a notification that the update is ready.
 6. Open the notification and confirm installation in Android's installer.
 
-A GitHub push creates a new APK; it does not patch code inside a running app. Android must install that APK.
+A GitHub push creates a new APK; it does not patch code inside a running app. Android must install that APK and confirm the installer prompt.
 
 ## CI artifacts
 
@@ -60,4 +51,4 @@ The Android build-check workflow creates a debug APK artifact for development ch
 
 ## Current scope
 
-This is the update-capable Android app foundation. The full TV playback/catalogue features are not implemented in this updater foundation yet. A public installable release can be published after the permanent signing secrets are configured and the release workflow succeeds.
+This repository currently contains the update-capable Android application foundation. Full TV channel catalogues/playback features are not included in this foundation yet. Production APK publication becomes active when the single `ANDROID_SIGNING_BUNDLE` secret is saved and the release workflow succeeds.

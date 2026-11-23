@@ -17,7 +17,6 @@ import androidx.core.content.FileProvider;
 import androidx.work.Constraints;
 import androidx.work.ExistingPeriodicWorkPolicy;
 import androidx.work.NetworkType;
-import androidx.work.OneTimeWorkRequest;
 import androidx.work.PeriodicWorkRequest;
 import androidx.work.WorkManager;
 import java.io.File;
@@ -106,8 +105,6 @@ public final class MainActivity extends Activity {
                 .setConstraints(constraints).build();
         WorkManager.getInstance(this).enqueueUniquePeriodicWork(
                 "abo-uobidah-tv-update-check", ExistingPeriodicWorkPolicy.KEEP, periodic);
-        OneTimeWorkRequest first = new OneTimeWorkRequest.Builder(UpdateCheckWorker.class).setConstraints(constraints).build();
-        WorkManager.getInstance(this).enqueue(first);
     }
     private void askForNotificationPermission() {
         if (Build.VERSION.SDK_INT >= 33 && checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS)

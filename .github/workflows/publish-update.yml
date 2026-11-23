@@ -55,6 +55,8 @@ jobs:
           SIGNING_BUNDLE: ${{ secrets.ANDROID_SIGNING_BUNDLE }}
         shell: bash
         run: |
+          # Normalize pasted line breaks in the protected JSON secret before parsing.
+          SIGNING_BUNDLE=$(printf '%s' "$SIGNING_BUNDLE" | tr -d '\r\n\t')
           KEYSTORE_B64=$(jq -r '.keystoreBase64' <<< "$SIGNING_BUNDLE")
           STORE_PASS=$(jq -r '.storePassword' <<< "$SIGNING_BUNDLE")
           KEY_ALIAS=$(jq -r '.keyAlias' <<< "$SIGNING_BUNDLE")

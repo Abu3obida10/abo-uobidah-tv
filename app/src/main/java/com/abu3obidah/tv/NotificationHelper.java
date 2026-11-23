@@ -14,9 +14,9 @@ import androidx.core.content.ContextCompat;
 final class NotificationHelper {
     private static final String CHANNEL_ID = "app_updates";
     private NotificationHelper() { }
-    static void showUpdateAvailable(Context context, UpdateManifest manifest, boolean downloaded) {
+    static boolean showUpdateAvailable(Context context, UpdateManifest manifest, boolean downloaded) {
         if (Build.VERSION.SDK_INT >= 33
-                && ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) return;
+                && ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) return false;
         NotificationManager manager = (NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE);
         if (Build.VERSION.SDK_INT >= 26 && manager != null) {
             NotificationChannel channel = new NotificationChannel(CHANNEL_ID, "تحديثات التطبيق", NotificationManager.IMPORTANCE_DEFAULT);
@@ -37,5 +37,6 @@ final class NotificationHelper {
                 .setStyle(new NotificationCompat.BigTextStyle().bigText(body))
                 .setPriority(NotificationCompat.PRIORITY_DEFAULT).setAutoCancel(true).setContentIntent(pending);
         NotificationManagerCompat.from(context).notify(2001, notification.build());
+        return true;
     }
 }

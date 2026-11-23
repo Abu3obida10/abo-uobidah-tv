@@ -14,10 +14,11 @@ Do not change the application ID after the first public installation. Every upda
 ## Implemented in this foundation
 
 - Android mobile and Android TV launcher entry points.
-- Update check when the app opens, plus periodic network-constrained checks (WorkManager, 15-minute interval; Android may defer background work).
-- Notification when a newer signed release is available, subject to Android notification permission.
-- HTTPS download with SHA-256, package ID, version, and installed signer-certificate verification.
-- Android package installer handoff. Android requires the user to confirm installation; normal apps cannot silently install themselves.
+- Update check when the app opens, plus a background network-constrained WorkManager check every 15 minutes (Android may defer background work).
+- When a newer release is found and the Internet is available, the worker downloads the APK in the background, checks its SHA-256, package ID, version and signer, then sends a notification that it is ready.
+- If background download fails, the app still shows the update and lets the user retry manually.
+- The app also lets the user manually check, download with progress, and install.
+- Android package installer handoff. Android requires the user to confirm installation; ordinary apps cannot silently install themselves.
 - GitHub Actions build validation on source pushes.
 - Automatic signed release publication after the signing secrets below are added. The release workflow updates updates/latest.json after publishing the APK.
 
@@ -35,7 +36,7 @@ Create a release keystore using Android Studio (Build -> Generate Signed Bundle 
 | ANDROID_KEY_PASSWORD | Key password |
 
 On Windows PowerShell, convert the keystore file to Base64 for the first secret:
-    
+
     [Convert]::ToBase64String([IO.File]::ReadAllBytes("C:\secure\abo-uobidah-release.jks")) | Set-Clipboard
 
 Add secrets at GitHub -> this repository -> Settings -> Secrets and variables -> Actions -> New repository secret.
@@ -48,13 +49,14 @@ Back up the keystore and passwords securely. Losing the key means Android will r
 2. GitHub Actions builds and signs a new APK using the saved private key.
 3. The workflow publishes a GitHub Release and updates the live manifest with its URL, version code, SHA-256 and signer fingerprint.
 4. The installed app checks GitHub when opened and periodically when network access is available.
-5. The app displays an update notification and button, downloads and verifies the APK, then opens Android's installer for your approval.
+5. The app downloads and verifies the update in the background, then displays a notification that the update is ready.
+6. Open the notification and confirm installation in Android's installer.
 
-A GitHub push creates a new APK; it does not patch code inside a running app. The APK must be installed by Android.
+A GitHub push creates a new APK; it does not patch code inside a running app. Android must install that APK.
 
 ## CI artifacts
 
-The Android build-check workflow creates a debug APK artifact for testing only. It is not the signed public update and must not be distributed as a production upgrade.
+The Android build-check workflow creates a debug APK artifact for development checks. It is not the signed public update and must not be distributed as a production upgrade.
 
 ## Current scope
 

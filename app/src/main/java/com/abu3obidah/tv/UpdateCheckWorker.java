@@ -8,9 +8,19 @@ public final class UpdateCheckWorker extends Worker {
     public UpdateCheckWorker(@NonNull Context context, @NonNull WorkerParameters parameters) { super(context, parameters); }
     @NonNull @Override public Result doWork() {
         try {
+            Context context = getApplicationContext();
             UpdateManifest manifest = UpdateClient.fetchLatest();
             if (manifest.isNewerThanInstalled() && manifest.isDownloadReady()) {
-                NotificationHelper.showUpdateAvailable(getApplicationContext(), manifest);
+                boolean ready = UpdateClient.isCachedUpdateValid(context, manifest);
+                if (!ready) {
+                    try {
+                        UpdateClient.downloadAndVerify(context, manifest, null);
+                        ready = true;
+                    } catch (Exception downloadError) {
+                        // Notify that an update exists; the user can retry the download in the app.
+                    }
+                }
+                NotificationHelper.showUpdateAvailable(context, manifest, ready);
             }
             return Result.success();
         } catch (Exception exception) {
